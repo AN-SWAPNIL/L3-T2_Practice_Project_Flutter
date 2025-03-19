@@ -89,6 +89,7 @@ Before you begin, ensure that you have the following installed:
 
 The project is organized as follows:
 
+```
 travel_bd/
 ├── android/                       # Android-specific code
 ├── ios/                           # iOS-specific code
@@ -104,3 +105,4 @@ travel_bd/
 ├── test/                          # Test files
 ├── pubspec.yaml                   # Project dependencies
 └── README.md                      # Project documentation
+```
