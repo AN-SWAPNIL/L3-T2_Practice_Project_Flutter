@@ -1,9 +1,5 @@
 # Travel BD - Your Ultimate Travel Companion in Bangladesh
 
-![App Logo](path/to/your/app_logo.png)  <!-- Replace with your app's logo -->
-
-## Overview
-
 Travel BD is a comprehensive mobile application designed to help users explore the beauty and diversity of Bangladesh. Whether you're a local looking for a weekend getaway or a tourist planning your first trip, Travel BD provides all the tools you need to discover, plan, and enjoy your journey.
 
 This app is built using Flutter, Firebase, GetX, and Provider, ensuring a smooth and engaging user experience.
