@@ -16,7 +16,8 @@ import 'package:cloud_firestore/cloud_firestore.dart';
 class TouristDetailsPage extends StatefulWidget {
   final TouristAttraction attraction;
 
-  const TouristDetailsPage({Key? key, required this.attraction}) : super(key: key);
+  const TouristDetailsPage({Key? key, required this.attraction})
+      : super(key: key);
 
   @override
   _TouristDetailsPageState createState() => _TouristDetailsPageState();
@@ -25,6 +26,15 @@ class TouristDetailsPage extends StatefulWidget {
 class _TouristDetailsPageState extends State<TouristDetailsPage> {
   GoogleMapController? _googleMapController;
   Marker? _origin;
+  double? _averageRating;
+  int _totalRatings = 0;
+
+  @override
+  void initState() {
+    super.initState();
+    _loadAverageRating();
+  }
+
   Marker? _destination;
   Directions? _info;
 
@@ -39,22 +49,75 @@ class _TouristDetailsPageState extends State<TouristDetailsPage> {
     super.dispose();
   }
 
+  Future<void> _loadAverageRating() async {
+    try {
+      final ratingsSnapshot = await FirebaseFirestore.instance
+          .collection('attractions')
+          .doc(widget.attraction.name)
+          .collection('ratings')
+          .get();
+
+      if (ratingsSnapshot.docs.isNotEmpty) {
+        double totalRating = 0;
+        for (var doc in ratingsSnapshot.docs) {
+          totalRating += (doc.data()['rating'] as num).toDouble();
+        }
+        setState(() {
+          _averageRating = totalRating / ratingsSnapshot.docs.length;
+          _totalRatings = ratingsSnapshot.docs.length;
+        });
+      } else {
+        setState(() {
+          _averageRating =
+              widget.attraction.rating; // Fallback to default rating
+          _totalRatings = 0;
+        });
+      }
+    } catch (e) {
+      print('Error loading rating: $e');
+      setState(() {
+        _averageRating = widget.attraction.rating; // Fallback to default rating
+        _totalRatings = 0;
+      });
+    }
+  }
+
   Future<void> _rateAttraction() async {
     final userId = FirebaseAuth.instance.currentUser?.uid;
     if (userId == null) return;
 
-    double? rating;
+    // Check if user has already rated this attraction
+    double initialRating = 0;
+    try {
+      final existingRating = await FirebaseFirestore.instance
+          .collection('attractions')
+          .doc(widget.attraction.name)
+          .collection('ratings')
+          .doc(userId)
+          .get();
+
+      if (existingRating.exists) {
+        initialRating =
+            (existingRating.data()?['rating'] as num?)?.toDouble() ?? 0;
+      }
+    } catch (e) {
+      print('Error loading existing rating: $e');
+    }
+
+    double? rating = initialRating;
     await showDialog(
       context: context,
       builder: (context) {
         return AlertDialog(
-          title: const Text('Rate this attraction'),
+          title: Text(initialRating > 0
+              ? 'Update your rating'
+              : 'Rate this attraction'),
           content: RatingBar.builder(
-            initialRating: 0,
+            initialRating: initialRating,
             minRating: 1,
             itemSize: 40,
             direction: Axis.horizontal,
-            allowHalfRating: false,
+            allowHalfRating: true,
             itemBuilder: (context, _) => const Icon(
               Icons.star,
               color: Colors.amber,
@@ -85,10 +148,33 @@ class _TouristDetailsPageState extends State<TouristDetailsPage> {
 
   Future<void> _submitRating(String userId, double rating) async {
     try {
-      await FirebaseFirestore.instance.collection('users').doc(userId).collection('ratings').doc(widget.attraction.name).set({
+      // Store the rating in attractions collection for easier aggregation
+      await FirebaseFirestore.instance
+          .collection('attractions')
+          .doc(widget.attraction.name)
+          .collection('ratings')
+          .doc(userId)
+          .set({
         'rating': rating,
+        'userId': userId,
         'timestamp': FieldValue.serverTimestamp(),
       });
+
+      // Also store in user's ratings for personal tracking
+      await FirebaseFirestore.instance
+          .collection('users')
+          .doc(userId)
+          .collection('ratings')
+          .doc(widget.attraction.name)
+          .set({
+        'rating': rating,
+        'attractionName': widget.attraction.name,
+        'timestamp': FieldValue.serverTimestamp(),
+      });
+
+      // Reload the average rating after submitting
+      await _loadAverageRating();
+
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(content: Text('Rating submitted successfully!')),
       );
@@ -162,7 +248,8 @@ class _TouristDetailsPageState extends State<TouristDetailsPage> {
                           IconButton(
                             iconSize: 20,
                             onPressed: () {
-                              provider.toggleFavorite(widget.attraction, userId!);
+                              provider.toggleFavorite(
+                                  widget.attraction, userId!);
                             },
                             icon: Icon(
                               provider.isExist(widget.attraction)
@@ -205,9 +292,10 @@ class _TouristDetailsPageState extends State<TouristDetailsPage> {
                   children: [
                     Text(
                       widget.attraction.duration,
-                      style: Theme.of(context).textTheme.headlineSmall?.copyWith(
-                        color: Theme.of(context).colorScheme.primary,
-                      ),
+                      style:
+                          Theme.of(context).textTheme.headlineSmall?.copyWith(
+                                color: Theme.of(context).colorScheme.primary,
+                              ),
                     ),
                     const SizedBox(height: 5),
                     Text(
@@ -217,7 +305,7 @@ class _TouristDetailsPageState extends State<TouristDetailsPage> {
                   ],
                 ),
                 Spacer(),
-              /*  Padding(
+                /*  Padding(
                   padding: const EdgeInsets.only(right: 4),
                   child: IconButton(
                     onPressed: () {
@@ -236,8 +324,16 @@ class _TouristDetailsPageState extends State<TouristDetailsPage> {
                   mainAxisSize: MainAxisSize.min,
                   children: [
                     Text(
-                      widget.attraction.rating.toString(),
+                      _averageRating != null
+                          ? _averageRating!.toStringAsFixed(1)
+                          : widget.attraction.rating.toString(),
                       style: Theme.of(context).textTheme.headlineSmall,
+                    ),
+                    Text(
+                      _totalRatings > 0
+                          ? '($_totalRatings reviews)'
+                          : '(No reviews)',
+                      style: Theme.of(context).textTheme.bodySmall,
                     ),
                     IconButton(
                       icon: Icon(
@@ -263,7 +359,7 @@ class _TouristDetailsPageState extends State<TouristDetailsPage> {
                   fit: BoxFit.cover,
                 ),
               ),
-             /* child: GoogleMap(
+              /* child: GoogleMap(
                 initialCameraPosition: _initialCameraPosition,
                 onMapCreated: (controller) => _googleMapController = controller,
                 markers: {
@@ -295,7 +391,7 @@ class _TouristDetailsPageState extends State<TouristDetailsPage> {
             const SizedBox(height: 15),
             const Distance(),
             const SizedBox(height: 20),
-           /* ElevatedButton(
+            /* ElevatedButton(
               onPressed: () {
                 Navigator.push(
                   context,

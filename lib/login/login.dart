@@ -9,9 +9,6 @@ import '../homepage/homepage.dart';
 class login extends StatelessWidget {
   final LoginController c = Get.put(LoginController());
 
-  // Add a boolean to manage password visibility
-  bool _obscureText = true;
-
   @override
   Widget build(BuildContext context) {
     return Scaffold(
@@ -69,25 +66,27 @@ class login extends StatelessWidget {
                     Padding(
                       padding: EdgeInsets.all(20.0),
                       child: Obx(() => TextField(
-                        controller: c.password,
-                        obscureText: c.obscureText.value,
-                        decoration: InputDecoration(
-                          hintText: 'Password',
-                          labelText: 'Password',
-                          suffixIcon: IconButton(
-                            icon: Icon(
-                              c.obscureText.value ? Icons.visibility_off : Icons.visibility,
+                            controller: c.password,
+                            obscureText: c.obscureText.value,
+                            decoration: InputDecoration(
+                              hintText: 'Password',
+                              labelText: 'Password',
+                              suffixIcon: IconButton(
+                                icon: Icon(
+                                  c.obscureText.value
+                                      ? Icons.visibility_off
+                                      : Icons.visibility,
+                                ),
+                                onPressed: () {
+                                  c.obscureText.value = !c.obscureText
+                                      .value; // Toggle the visibility
+                                },
+                              ),
+                              fillColor: Color(0xffD8D8DD),
+                              filled: true,
                             ),
-                            onPressed: () {
-                              c.obscureText.value = !c.obscureText.value; // Toggle the visibility
-                            },
-                          ),
-                          fillColor: Color(0xffD8D8DD),
-                          filled: true,
-                        ),
-                      )),
+                          )),
                     ),
-
                     Padding(
                       padding: EdgeInsets.only(left: 19, top: 8, right: 19),
                       child: Row(
@@ -117,7 +116,8 @@ class login extends StatelessWidget {
                       },
                       style: TextButton.styleFrom(
                         backgroundColor: Color(0xFFFFFFFF),
-                        padding: EdgeInsets.symmetric(horizontal: 140, vertical: 15),
+                        padding:
+                            EdgeInsets.symmetric(horizontal: 140, vertical: 15),
                       ),
                       child: Text(
                         'Login',
@@ -128,7 +128,7 @@ class login extends StatelessWidget {
                       ),
                     ),
                     SizedBox(height: 15),
-                    /*Padding(
+                    Padding(
                       padding: const EdgeInsets.only(left: 18.0, right: 18),
                       child: Row(
                         mainAxisAlignment: MainAxisAlignment.spaceEvenly,
@@ -147,66 +147,50 @@ class login extends StatelessWidget {
                           ),
                         ],
                       ),
-                    ),*/
-                   /* Row(
-                      mainAxisAlignment: MainAxisAlignment.spaceEvenly,
-                      children: [
-                        GestureDetector(
-                          onTap: () {
-                            c.loginWithGoogle();
-                          },
-                          child: Container(
-                            height: 50,
-                            width: 100,
-                            decoration: BoxDecoration(
-                              color: Color(0xff484848),
-                              borderRadius: BorderRadius.circular(5),
+                    ),
+                    SizedBox(height: 15),
+                    GestureDetector(
+                      onTap: () async {
+                        bool success = await c.loginWithGoogle();
+                        if (success) {
+                          Get.to(homepage());
+                        }
+                      },
+                      child: Container(
+                        height: 50,
+                        width: 250,
+                        decoration: BoxDecoration(
+                          color: Colors.white,
+                          borderRadius: BorderRadius.circular(25),
+                          boxShadow: [
+                            BoxShadow(
+                              color: Colors.black26,
+                              blurRadius: 4,
+                              offset: Offset(0, 2),
                             ),
-                            child: Icon(
+                          ],
+                        ),
+                        child: Row(
+                          mainAxisAlignment: MainAxisAlignment.center,
+                          children: [
+                            Icon(
                               Icons.g_mobiledata,
-                              color: Colors.white,
-                              size: 40,
+                              color: Colors.red,
+                              size: 30,
                             ),
-                          ),
+                            SizedBox(width: 10),
+                            Text(
+                              'Sign in with Google',
+                              style: TextStyle(
+                                color: Colors.black87,
+                                fontWeight: FontWeight.w500,
+                                fontSize: 16,
+                              ),
+                            ),
+                          ],
                         ),
-                        GestureDetector(
-                          onTap: () {
-                            //c.loginWithApple();
-                          },
-                          child: Container(
-                            height: 50,
-                            width: 100,
-                            decoration: BoxDecoration(
-                              color: Color(0xff484848),
-                              borderRadius: BorderRadius.circular(5),
-                            ),
-                            child: Icon(
-                              Icons.apple,
-                              color: Colors.white,
-                              size: 40,
-                            ),
-                          ),
-                        ),
-                        GestureDetector(
-                          onTap: () {
-                            //c.loginWithFacebook();
-                          },
-                          child: Container(
-                            height: 50,
-                            width: 100,
-                            decoration: BoxDecoration(
-                              color: Color(0xff484848),
-                              borderRadius: BorderRadius.circular(5),
-                            ),
-                            child: Icon(
-                              Icons.facebook,
-                              color: Colors.white,
-                              size: 40,
-                            ),
-                          ),
-                        ),
-                      ],
-                    ),*/
+                      ),
+                    ),
                     Padding(
                       padding: const EdgeInsets.only(left: 100.0, top: 30),
                       child: Row(

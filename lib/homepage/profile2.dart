@@ -21,7 +21,7 @@ class _ProfileState extends State<profile2> {
   String gender = "man";
   User? loggedInUser;
   String userName = "";
-  String age = "" ;
+  String age = "";
   String userProfileImageUrl = "";
 
   final TextEditingController _nameController = TextEditingController();
@@ -62,13 +62,14 @@ class _ProfileState extends State<profile2> {
       }
     }
   }
+
   Future<void> _pickAndUploadImage() async {
     final picker = ImagePicker();
     final pickedFile = await picker.pickImage(source: ImageSource.gallery);
-print(pickedFile!.path);
-;
+    print(pickedFile!.path);
+    ;
 
-if (pickedFile != null) {
+    if (pickedFile != null) {
       // Correct usage of File
       File imageFile = File(pickedFile.path); // Ensure dart:io is imported
 
@@ -109,13 +110,15 @@ if (pickedFile != null) {
         );
       }
     }
-
-
   }
+
   Future<void> _updateUserProfile() async {
     if (loggedInUser != null) {
       try {
-        await FirebaseFirestore.instance.collection('users').doc(loggedInUser!.uid).update({
+        await FirebaseFirestore.instance
+            .collection('users')
+            .doc(loggedInUser!.uid)
+            .update({
           'username': _nameController.text,
           'age': int.tryParse(_ageController.text) ?? 0,
           'gender': gender,
@@ -137,8 +140,7 @@ if (pickedFile != null) {
       appBar: AppBar(
         leading: IconButton(
           onPressed: () {
-            // Navigator.pop(context);
-            print("hello");
+            Navigator.pop(context);
           },
           icon: const Icon(Ionicons.chevron_back_outline),
         ),
@@ -175,7 +177,7 @@ if (pickedFile != null) {
                 ),
               ),
               const SizedBox(height: 40),
-             /* EditItem(
+              /* EditItem(
                 title: "Photo",
                 widget: Column(
                   children: [
@@ -284,7 +286,8 @@ if (pickedFile != null) {
                   },
                   style: ElevatedButton.styleFrom(
                     backgroundColor: Colors.blueGrey,
-                    padding: const EdgeInsets.symmetric(horizontal: 30, vertical: 15),
+                    padding: const EdgeInsets.symmetric(
+                        horizontal: 30, vertical: 15),
                   ),
                   child: const Text(
                     "Logout",
